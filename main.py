@@ -65,12 +65,14 @@ async def play(_, msg):
     except Exception as e:
         await msg.reply(f"❌ Error:\n{e}")
 
-
 async def main():
     await app.start()
     await call.start()
     print("Music bot running...")
-    await asyncio.Event().wait()
+
+    # Keep bot alive forever
+    while True:
+        await asyncio.sleep(1000)
 
 
 if __name__ == "__main__":
