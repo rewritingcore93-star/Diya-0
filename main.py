@@ -1,5 +1,6 @@
 import asyncio
 import os
+import requests
 
 from pyrogram import Client, filters
 from pytgcalls import PyTgCalls
@@ -9,14 +10,18 @@ from pytgcalls.types import StreamType
 import yt_dlp
 
 from config import BOT_TOKEN, API_ID, API_HASH
-import requests
 
+
+# Reset old connections
 def reset_updates(token):
     url = f"https://api.telegram.org/bot{token}/deleteWebhook?drop_pending_updates=true"
     requests.get(url)
 
+
 reset_updates(BOT_TOKEN)
 
+
+# Pyrogram Client (Bot)
 app = Client(
     "musicbot",
     api_id=API_ID,
@@ -24,6 +29,7 @@ app = Client(
     bot_token=BOT_TOKEN
 )
 
+# Voice Call Client
 call = PyTgCalls(app)
 
 
@@ -43,7 +49,7 @@ def download_audio(url):
 
 @app.on_message(filters.command("start"))
 async def start(_, msg):
-    await msg.reply("🎵 Music Bot Ready!\nUse /play <youtube link>")
+    await msg.reply("🎵 VC Music Bot is Ready!\nUse /play <YouTube link>")
 
 
 @app.on_message(filters.command("play"))
@@ -71,12 +77,13 @@ async def play(_, msg):
     except Exception as e:
         await msg.reply(f"❌ Error:\n{e}")
 
+
 async def main():
     await app.start()
     await call.start()
+
     print("Music bot running...")
 
-    # Keep bot alive forever
     while True:
         await asyncio.sleep(1000)
 
