@@ -1,6 +1,5 @@
 import asyncio
 import os
-import requests
 
 from pyrogram import Client, filters
 from pytgcalls import PyTgCalls
@@ -9,34 +8,30 @@ from pytgcalls.types import StreamType
 
 import yt_dlp
 
-from config import BOT_TOKEN, API_ID, API_HASH
+from config import API_ID, API_HASH, BOT_TOKEN
 
 
-# Reset old connections
-def reset_updates(token):
-    url = f"https://api.telegram.org/bot{token}/deleteWebhook?drop_pending_updates=true"
-    requests.get(url)
-
-
-reset_updates(BOT_TOKEN)
-
-
-# Pyrogram Client (Bot)
-app = Client(
-    "musicbot",
+# Bot Client
+bot = Client(
+    "bot",
     api_id=API_ID,
     api_hash=API_HASH,
     bot_token=BOT_TOKEN
 )
 
-# Voice Call Client
-call = PyTgCalls(app)
+# User Client (for VC)
+user = Client(
+    "user",
+    api_id=API_ID,
+    api_hash=API_HASH
+)
+
+call = PyTgCalls(user)
 
 
 YDL_OPTS = {
     "format": "bestaudio/best",
     "quiet": True,
-    "no_warnings": True,
     "outtmpl": "downloads/%(id)s.%(ext)s",
 }
 
@@ -47,16 +42,16 @@ def download_audio(url):
         return ydl.prepare_filename(info)
 
 
-@app.on_message(filters.command("start"))
+@bot.on_message(filters.command("start"))
 async def start(_, msg):
-    await msg.reply("🎵 VC Music Bot is Ready!\nUse /play <YouTube link>")
+    await msg.reply("🎵 VC Music Bot Ready!\n/start VC first, then /play link")
 
 
-@app.on_message(filters.command("play"))
+@bot.on_message(filters.command("play"))
 async def play(_, msg):
 
     if len(msg.command) < 2:
-        await msg.reply("❌ Give YouTube link.\nExample:\n/play https://youtu.be/...")
+        await msg.reply("❌ Use:\n/play YouTubeLink")
         return
 
     url = msg.command[1]
@@ -72,17 +67,19 @@ async def play(_, msg):
             stream_type=StreamType().pulse_stream
         )
 
-        await msg.reply("▶️ Playing in VC!")
+        await msg.reply("▶️ Playing!")
 
     except Exception as e:
         await msg.reply(f"❌ Error:\n{e}")
 
 
 async def main():
-    await app.start()
+
+    await user.start()   # Login user
+    await bot.start()    # Start bot
     await call.start()
 
-    print("Music bot running...")
+    print("VC Music Bot Running...")
 
     while True:
         await asyncio.sleep(1000)
