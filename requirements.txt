@@ -5,3 +5,4 @@ tgcrypto
 pytgcalls
 yt-dlp
 python-dotenv
+requests
