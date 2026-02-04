@@ -1,40 +1,77 @@
+import asyncio
 import os
-from telegram import Update
-from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes
 
-# Get token from Railway environment
-BOT_TOKEN = os.getenv("BOT_TOKEN")
+from pyrogram import Client, filters
+from pytgcalls import PyTgCalls
+from pytgcalls.types.input_stream import AudioPiped
+from pytgcalls.types import StreamType
 
+import yt_dlp
 
-async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_text(
-        "🎵 Hello! I am your Music Bot!\n\n"
-        "Soon I will play songs for you 😄"
-    )
+from config import BOT_TOKEN, API_ID, API_HASH
 
 
-async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_text(
-        "/start - Start bot\n"
-        "/help - Show help\n\n"
-        "More features coming soon 🚀"
-    )
+app = Client(
+    "musicbot",
+    api_id=API_ID,
+    api_hash=API_HASH,
+    bot_token=BOT_TOKEN
+)
+
+call = PyTgCalls(app)
 
 
-def main():
-    if not BOT_TOKEN:
-        print("ERROR: BOT_TOKEN not found!")
+YDL_OPTS = {
+    "format": "bestaudio/best",
+    "quiet": True,
+    "no_warnings": True,
+    "outtmpl": "downloads/%(id)s.%(ext)s",
+}
+
+
+def download_audio(url):
+    with yt_dlp.YoutubeDL(YDL_OPTS) as ydl:
+        info = ydl.extract_info(url, download=True)
+        return ydl.prepare_filename(info)
+
+
+@app.on_message(filters.command("start"))
+async def start(_, msg):
+    await msg.reply("🎵 Music Bot Ready!\nUse /play <youtube link>")
+
+
+@app.on_message(filters.command("play"))
+async def play(_, msg):
+
+    if len(msg.command) < 2:
+        await msg.reply("❌ Give YouTube link.\nExample:\n/play https://youtu.be/...")
         return
 
-    app = ApplicationBuilder().token(BOT_TOKEN).build()
+    url = msg.command[1]
 
-    app.add_handler(CommandHandler("start", start))
-    app.add_handler(CommandHandler("help", help_command))
+    await msg.reply("⬇️ Downloading...")
 
-    print("Bot is running...")
+    try:
+        file = download_audio(url)
 
-    app.run_polling()
+        await call.join_group_call(
+            msg.chat.id,
+            AudioPiped(file),
+            stream_type=StreamType().pulse_stream
+        )
+
+        await msg.reply("▶️ Playing in VC!")
+
+    except Exception as e:
+        await msg.reply(f"❌ Error:\n{e}")
+
+
+async def main():
+    await app.start()
+    await call.start()
+    print("Music bot running...")
+    await asyncio.Event().wait()
 
 
 if __name__ == "__main__":
-    main()
+    asyncio.run(main())
