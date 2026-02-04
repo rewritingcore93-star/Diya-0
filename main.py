@@ -9,7 +9,13 @@ from pytgcalls.types import StreamType
 import yt_dlp
 
 from config import BOT_TOKEN, API_ID, API_HASH
+import requests
 
+def reset_updates(token):
+    url = f"https://api.telegram.org/bot{token}/deleteWebhook?drop_pending_updates=true"
+    requests.get(url)
+
+reset_updates(BOT_TOKEN)
 
 app = Client(
     "musicbot",
