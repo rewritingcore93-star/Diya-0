@@ -1,5 +1,4 @@
 import asyncio
-import os
 
 from pyrogram import Client, filters
 from pytgcalls import PyTgCalls
@@ -11,7 +10,7 @@ import yt_dlp
 from config import API_ID, API_HASH, BOT_TOKEN
 
 
-# Bot Client
+# Bot client
 bot = Client(
     "bot",
     api_id=API_ID,
@@ -19,7 +18,7 @@ bot = Client(
     bot_token=BOT_TOKEN
 )
 
-# User Client (for VC)
+# User client (for VC)
 user = Client(
     "user",
     api_id=API_ID,
@@ -44,7 +43,7 @@ def download_audio(url):
 
 @bot.on_message(filters.command("start"))
 async def start(_, msg):
-    await msg.reply("🎵 VC Music Bot Ready!\n/start VC first, then /play link")
+    await msg.reply("🎵 VC Music Bot Ready!\nStart VC then use /play link")
 
 
 @bot.on_message(filters.command("play"))
@@ -75,11 +74,11 @@ async def play(_, msg):
 
 async def main():
 
-    await user.start()   # Login user
-    await bot.start()    # Start bot
-    await call.start()
-
     print("VC Music Bot Running...")
+
+    await user.start()
+    await bot.start()
+    await call.start()
 
     while True:
         await asyncio.sleep(1000)
